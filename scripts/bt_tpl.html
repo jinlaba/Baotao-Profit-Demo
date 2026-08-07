@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宝淘淘汇总数据 · 日报 / 月报看板</title>
+<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; background: #f1f5f9; color: #1e293b; -webkit-font-smoothing: antialiased; }
+.header { background: linear-gradient(120deg, #0f172a 0%, #1e3a8a 100%); color: #fff; padding: 20px 28px 16px; }
+.header-inner { max-width: 1560px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+.header .sub { font-size: 13px; color: #93c5fd; margin-top: 4px; }
+.header .meta { display: flex; gap: 16px; font-size: 13px; color: #cbd5e1; align-items: center; flex-wrap: wrap; }
+.header .meta b { color: #fff; font-weight: 600; }
+.header .badge { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+.tabs { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(15,23,42,.05); }
+.tabs-inner { max-width: 1560px; margin: 0 auto; display: flex; gap: 4px; padding: 0 18px; }
+.tab { padding: 13px 26px; font-size: 15px; font-weight: 600; color: #64748b; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all .18s; }
+.tab:hover { color: #1e3a8a; }
+.tab.active { color: #1e3a8a; border-bottom-color: #1e3a8a; }
+.control-bar { background: #fff; border-bottom: 1px solid #e2e8f0; }
+.control-inner { max-width: 1560px; margin: 0 auto; display: flex; gap: 22px; align-items: center; padding: 10px 18px; flex-wrap: wrap; }
+.ctl-group { display: flex; align-items: center; gap: 8px; }
+.ctl-group label { font-size: 13px; font-weight: 600; color: #475569; }
+.ctl-group select { padding: 6px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; color: #0f172a; font-weight: 600; cursor: pointer; outline: none; max-width: 200px; }
+.ctl-group select:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30,58,138,.12); }
+.container { max-width: 1560px; margin: 0 auto; padding: 20px 18px 40px; }
+.section { display: none; }
+.section.active { display: block; }
+.sec-title { font-size: 13px; font-weight: 700; color: #64748b; letter-spacing: 2px; margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; }
+.sec-title::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
+.sec-title .pill { background: #dc2626; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; letter-spacing: 1px; }
+
+/* ===== KPI 网格（净利润为第一性指标） ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
+.kpi-card { background: #fff; border-radius: 12px; padding: 15px 15px 13px; box-shadow: 0 1px 3px rgba(15,23,42,.06); border-left: 4px solid #1e3a8a; position: relative; }
+.kpi-card.kpi-main { border-left: 4px solid #dc2626; background: linear-gradient(135deg, #fff 0%, #fff5f5 100%); box-shadow: 0 2px 8px rgba(220,38,38,.10); }
+.kpi-card.kpi-main .kpi-label { color: #991b1b; font-weight: 700; }
+.kpi-card.kpi-main .kpi-value { font-size: 26px; }
+.kpi-card.kpi-sub-profit { border-left-color: #7c3aed; background: linear-gradient(135deg, #fff 0%, #faf5ff 100%); }
+.kpi-label { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+.kpi-value { font-size: 23px; font-weight: 700; color: #0f172a; line-height: 1.1; white-space: nowrap; }
+.kpi-value .unit { font-size: 12px; font-weight: 500; color: #94a3b8; margin-left: 3px; }
+.kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 7px; min-height: 15px; }
+.kpi-sub .up, .kpi-sub .down, .kpi-sub .flat { font-weight: 600; }
+.kpi-tag { position: absolute; top: 8px; right: 8px; background: rgba(220,38,38,.10); color: #dc2626; font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: 700; letter-spacing: 0.5px; }
+.kpi-tag-muted { background: rgba(100,116,139,.10); color: #64748b; }
+
+.row { display: grid; gap: 14px; margin-bottom: 14px; }
+.row-2 { grid-template-columns: 1.6fr 1fr; }
+.row-eq { grid-template-columns: 1fr 1fr; }
+.row-1 { grid-template-columns: 1fr; }
+.row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+.card-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-sub { font-size: 12px; font-weight: 400; color: #94a3b8; }
+.card-em { color: #dc2626; font-weight: 700; }
+.chart { width: 100%; height: 300px; }
+.chart-sm { height: 260px; }
+.chart-tall { height: 340px; }
+.table-wrap { overflow-x: auto; max-height: 430px; overflow-y: auto; }
+table.dt { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.dt thead th { position: sticky; top: 0; background: #f8fafc; color: #475569; font-weight: 600; padding: 9px 8px; text-align: center; border-bottom: 2px solid #e2e8f0; white-space: nowrap; z-index: 1; }
+table.dt thead th:first-child, table.dt thead th:nth-child(2), table.dt thead th:nth-child(3) { text-align: left; }
+table.dt thead th.col-profit { color: #dc2626; }
+table.dt td { padding: 8px 8px; text-align: center; border-bottom: 1px solid #f1f5f9; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.dt td.name, table.dt td.leader, table.dt td.id { text-align: left; }
+table.dt td.b { font-weight: 700; color: #0f172a; }
+table.dt td.col-profit { color: #dc2626; font-weight: 600; }
+table.dt td.muted { color: #94a3b8; }
+table.dt td.rank { color: #94a3b8; font-weight: 600; }
+table.dt td.id { font-family: Consolas, Menlo, monospace; font-size: 12px; color: #475569; }
+table.dt tbody tr:hover { background: #f8fafc; }
+.gold { color: #d97706; font-weight: 700; }
+.silver { color: #64748b; font-weight: 700; }
+.bronze { color: #b45309; font-weight: 700; }
+.up { color: #dc2626; }
+.down { color: #16a34a; }
+.flat { color: #94a3b8; }
+.struct-bar { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin: 10px 0 12px; box-shadow: inset 0 0 0 1px rgba(15,23,42,.05); }
+.struct-bar .seg { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; overflow: hidden; min-width: 26px; transition: opacity .2s; }
+.struct-bar .seg:hover { opacity: .85; }
+.struct-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #475569; margin-top: 8px; }
+.struct-legend .lg { display: flex; align-items: center; gap: 6px; }
+.struct-legend .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.wl-bar { display: flex; height: 28px; border-radius: 8px; overflow: hidden; margin: 8px 0 10px; }
+.wl-win { background: linear-gradient(90deg, #ef4444, #dc2626); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; min-width: 30px; }
+.wl-loss { background: linear-gradient(90deg, #22c55e, #16a34a); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; min-width: 30px; }
+.wl-legend { display: flex; gap: 20px; font-size: 12px; color: #475569; flex-wrap: wrap; }
+.wl-legend .lg { display: flex; align-items: center; gap: 6px; }
+.wl-legend .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.notice { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 10px; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; line-height: 1.7; }
+.notice b { color: #78350f; }
+.notice-blue { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.notice-red { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.notice-violet { background: #faf5ff; border-color: #ddd6fe; color: #5b21b6; }
+.insight { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px; font-size: 12px; line-height: 1.8; color: #475569; border-radius: 4px; margin-top: 10px; }
+.insight b { color: #78350f; }
+.insight .up { font-weight: 700; }
+.insight .down { font-weight: 700; }
+.footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 0 4px; line-height: 1.8; }
+@media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .row-2, .row-eq, .row-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>宝淘淘汇总数据 · 经营看板</h1>
+    </div>
+    <div class="meta">
+      <span>数据范围：<b>%%RANGE_MIN%% ~ %%RANGE_MAX%%</b></span>
+      <span>共 <b id="dayCount"></b> 天 / <b id="monCount"></b> 个月</span>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tabs-inner">
+    <button class="tab active" data-tab="daily">日报</button>
+    <button class="tab" data-tab="monthly">月报</button>
+  </div>
+</div>
+
+<div class="control-bar">
+  <div class="control-inner">
+    <div class="ctl-group">
+      <label>日报 · 选择日期</label>
+      <select id="selDate"></select>
+    </div>
+    <div class="ctl-group">
+      <label>月报 · 选择月份</label>
+      <select id="selMonth"></select>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ================= 日报 ================= -->
+<div class="section active" id="sec-daily">
+  <div class="notice notice-blue"><b>日报 = 运营执行视角</b>：聚焦「今天卖了什么、赚了多少、流量转化如何」，按<b style="color:#dc2626">净利润</b>排序看<b>运营/店铺/商品</b>一线执行表现。顶部<b style="color:#dc2626">红色卡片</b>为当日净利润（链路：净收入→毛利→边际贡献→净利润，补单收入已在净收入中剔除）。</div>
+
+  <div class="sec-title">每日概览 · <span id="dDateLabel"></span></div>
+  <div class="kpi-grid" id="dKpi"></div>
+
+  <div class="row row-2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-title">近 30 天 净利润 / 净收入 趋势 <span class="card-sub">单位：元</span></div>
+      <div class="chart" id="chartTrend30"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">当日平台净利润占比 <span class="card-sub">元</span></div>
+      <div class="chart" id="chartPlatDaily"></div>
+    </div>
+  </div>
+
+  <div class="row row-2">
+    <div class="card">
+      <div class="card-title">当日店铺 <span class="card-em">净利润</span> 排行 <span class="card-sub">单位：元</span></div>
+      <div class="chart chart-sm" id="chartShopDaily"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">当日盈亏概览 <span class="card-sub">按商品记录</span></div>
+      <div id="dWl"></div>
+    </div>
+  </div>
+
+  <div class="row row-eq">
+    <div class="card">
+      <div class="card-title">当日运营 <span class="card-em">净利润</span> 排行 <span class="card-sub">净收入 / 净利润 单位：元</span></div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>#</th><th>运营</th><th class="col-profit">净利润</th><th>净收入</th><th>净利率</th><th>商品记录</th></tr></thead>
+          <tbody id="dStaffBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">当日 <span class="card-em">净利润</span> Top 商品 <span class="card-sub">商品ID已打码 · 单位：元</span></div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>#</th><th>商品ID</th><th>店铺</th><th class="col-profit">净利润</th><th>净收入</th></tr></thead>
+          <tbody id="dTopBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-1">
+    <div class="card">
+      <div class="card-title">当日店铺明细 <span class="card-sub">单位：元</span></div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>#</th><th>店铺</th><th class="col-profit">净利润</th><th>净收入</th><th>推广费</th><th>补单占比</th><th>访客数</th><th>买家数</th></tr></thead>
+          <tbody id="dShopBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 月报 ================= -->
+<div class="section" id="sec-monthly">
+  <div class="notice" id="mNotice"></div>
+
+  <div class="sec-title">月度概览 · <span id="mMonthLabel"></span> <span class="pill">以净利润为中心</span></div>
+  <div class="kpi-grid" id="mKpi"></div>
+
+  <div class="row row-1" style="margin-top:14px">
+    <div class="card">
+      <div class="card-title">月度经营趋势（2022-06 ~ 2024-05） <span class="card-sub">净收入 / 净利润 单位：万元</span></div>
+      <div class="chart chart-tall" id="chartTrendM"></div>
+    </div>
+  </div>
+
+  <div class="row row-2">
+    <div class="card">
+      <div class="card-title"><span id="mCostTitle"></span> 利润结构（占净收入比） <span class="card-sub">单位：万元</span></div>
+      <div class="struct-bar" id="mCostBar"></div>
+      <div class="struct-legend" id="mCostLegend"></div>
+      <div style="margin-top:14px;border-top:1px solid #f1f5f9;padding-top:6px">
+        <table class="dt">
+          <thead><tr><th>项目</th><th>金额（万元）</th><th>占净收入</th></tr></thead>
+          <tbody id="mCostBody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:8px">* 链路：<b>净收入</b> = 订单收入 − 补单收入 − 退款 − 减免；<b>毛利</b> = 发货收入 − 商品成本 − 快递费（发货收入为真实收入，与净收入存在确认时间差）；<b>边际贡献</b> = 毛利 − 平台佣金 − 推广费；<b>净利润</b> = 边际贡献 − 总分摊费用。补单成本不参与利润链路。</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span id="mDailyTitle"></span> 每日净利润 / 净收入 <span class="card-sub">单位：元</span></div>
+      <div class="chart" id="chartDailyM"></div>
+    </div>
+  </div>
+
+  <div class="row row-1">
+    <div class="card">
+      <div class="card-title"><span id="mAttrTitle"></span> 净利润变动归因（环比上月） <span class="card-sub">单位：万元 · 瀑布图</span></div>
+      <div class="chart" id="chartAttr" style="height:340px"></div>
+      <div style="font-size:12px;color:#475569;line-height:1.85" id="mAttrText"></div>
+    </div>
+  </div>
+
+  <!-- ====== 新增：推广费 & 补单 专项分析 ====== -->
+  <div class="sec-title">推广费 & 补单 专项分析 <span class="pill" style="background:#7c3aed">NEW</span></div>
+
+  <div class="row row-2">
+    <div class="card">
+      <div class="card-title"><span id="mPromoTitle"></span> 推广费 vs 推广收入 <span class="card-sub">单位：万元</span></div>
+      <div class="chart" id="chartPromo"></div>
+      <div class="insight" id="mPromoInsight"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span id="mSupplyTitle"></span> 补单占比（补单收入 ÷ 订单收入） <span class="card-sub">每日 · 补单不参与利润链路</span></div>
+      <div class="chart" id="chartSupply"></div>
+      <div class="insight" id="mSupplyInsight"></div>
+    </div>
+  </div>
+
+  <div class="row row-1">
+    <div class="card">
+      <div class="card-title">推广费 & 补单 关键洞察 <span class="card-sub">基于本期数据自动生成</span></div>
+      <div id="mKeyInsight" style="font-size:13px;line-height:2;color:#334155"></div>
+    </div>
+  </div>
+  <!-- ====== 新增模块结束 ====== -->
+
+  <div class="row row-2">
+    <div class="card">
+      <div class="card-title"><span id="mPlatTitle"></span> 平台净利润占比 <span class="card-sub">单位：万元</span></div>
+      <div class="chart" id="chartPlatMonthly"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span id="mWlTitle"></span> 盈亏概览 <span class="card-sub">按商品记录</span></div>
+      <div id="mWl"></div>
+    </div>
+  </div>
+
+  <div class="row row-1">
+    <div class="card">
+      <div class="card-title"><span id="mShopTitle"></span> 店铺 <span class="card-em">净利润</span> 排行 <span class="card-sub">净收入 / 净利润 单位：万元</span></div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>#</th><th>店铺</th><th class="col-profit">净利润</th><th>净收入</th><th>净利率</th><th>推广费</th><th>补单占比</th><th>访客数</th><th>买家数</th></tr></thead>
+          <tbody id="mShopBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-eq">
+    <div class="card">
+      <div class="card-title"><span id="mSupTitle"></span> 主管 <span class="card-em">净利润</span> 排名 <span class="card-sub">单位：万元</span></div>
+      <div class="chart chart-sm" id="chartSup" style="height:170px"></div>
+      <div class="table-wrap" style="max-height:320px">
+        <table class="dt">
+          <thead><tr><th>#</th><th>主管</th><th class="col-profit">净利润</th><th>净收入</th><th>净利率</th><th>管辖店铺</th><th>商品记录</th></tr></thead>
+          <tbody id="mSupBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span id="mTopTitle"></span> <span class="card-em">净利润</span> Top 商品 <span class="card-sub">商品ID已打码 · 单位：万元</span></div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>#</th><th>商品ID</th><th>店铺</th><th class="col-profit">净利润</th><th>净收入</th></tr></thead>
+          <tbody id="mTopBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  数据来源：宝淘淘汇总数据.xlsx（结果表）
+</div>
+</div>
+
+<script>
+var DATA = %%DATA%%;
+
+/* ================= 工具 ================= */
+function fmtN(v){ return (v==null || isNaN(v)) ? '-' : Number(v).toLocaleString('zh-CN'); }
+function fmtY(v){ return (v==null || isNaN(v)) ? '-' : Number(v).toLocaleString('zh-CN', {maximumFractionDigits:0}); }
+function fmtW(v, d){ return (v==null || isNaN(v)) ? '-' : (v/10000).toFixed(d==null?2:d); }
+function fmtPct(v, d){ return (v==null || isNaN(v)) ? '-' : (v*100).toFixed(d==null?1:d)+'%'; }
+function fmtRoi(v){ if(v==null) return '∞'; if(!isFinite(v) || Math.abs(v)>99) return '∞'; return v.toFixed(2); }
+function clsNum(v){ if(v==null || Math.abs(v)<1e-9) return 'flat'; return v>0 ? 'up' : 'down'; }
+function chgTag(cur, prev){
+  if(cur==null || prev==null || prev===0) return '<span class="flat">-</span>';
+  if(Math.abs(cur-prev)<1e-9) return '<span class="flat">持平</span>';
+  if(prev<0 && cur>0) return '<span class="up">↗ 扭亏为盈</span>';
+  if(cur<0 && prev>0) return '<span class="down">↘ 转盈为亏</span>';
+  var c = (cur-prev)/Math.abs(prev);
+  var cls = c>0 ? 'up' : 'down';
+  return '<span class="'+cls+'">'+(c>0?'↗':'↘')+' '+(c*100>=0?'+':'')+(c*100).toFixed(1)+'%</span>';
+}
+function ppTag(cur, prev){
+  if(cur==null || prev==null) return '<span class="flat">-</span>';
+  var d = cur - prev;
+  if(Math.abs(d)<0.05) return '<span class="flat">持平</span>';
+  var cls = d>0 ? 'up' : 'down';
+  return '<span class="'+cls+'">'+(d>0?'↗':'↘')+' '+(d>=0?'+':'')+d.toFixed(1)+'pp</span>';
+}
+function medal(i){ return i===1?' class="gold"':(i===2?' class="silver"':(i===3?' class="bronze"':'')); }
+function kpiCard(label, value, unit, sub, color, cls, tag){
+  var h = '<div class="kpi-card'+(cls?' '+cls:'')+'" style="border-left-color:'+color+'">'
+    + (tag?'<span class="kpi-tag'+(tag==='CORE'?' ':' kpi-tag-muted')+'">'+tag+'</span>':'')
+    + '<div class="kpi-label">'+label+'</div>'
+    + '<div class="kpi-value">'+value+(unit?'<span class="unit">'+unit+'</span>':'')+'</div>'
+    + '<div class="kpi-sub">'+sub+'</div></div>';
+  return h;
+}
+function wlHtml(win, loss){
+  var tot = win + loss;
+  var wp = tot? win/tot*100 : 0, lp = tot? loss/tot*100 : 0;
+  return '<div class="wl-bar">'
+    + '<div class="wl-win" style="width:'+wp.toFixed(1)+'%"><span>盈利 '+win+' 条</span></div>'
+    + '<div class="wl-loss" style="width:'+lp.toFixed(1)+'%"><span>亏损 '+loss+' 条</span></div></div>'
+    + '<div class="wl-legend">'
+    + '<span class="lg"><i style="background:#dc2626"></i>盈利记录 '+win+' 条（'+wp.toFixed(1)+'%）</span>'
+    + '<span class="lg"><i style="background:#16a34a"></i>亏损记录 '+loss+' 条（'+lp.toFixed(1)+'%）</span></div>';
+}
+
+/* ================= 图表初始化 ================= */
+var charts = {};
+function initChart(id){
+  var c = echarts.init(document.getElementById(id));
+  charts[id] = c; return c;
+}
+var C30 = initChart('chartTrend30');
+var CPD = initChart('chartPlatDaily');
+var CSD = initChart('chartShopDaily');
+var CTM = initChart('chartTrendM');
+var CDM = initChart('chartDailyM');
+var CAT = initChart('chartAttr');
+var CPM = initChart('chartPlatMonthly');
+var CPROMO = initChart('chartPromo');
+var CSUPPLY = initChart('chartSupply');
+var CSUP = initChart('chartSup');
+window.addEventListener('resize', function(){ Object.values(charts).forEach(function(c){ c.resize(); }); });
+
+function baseOpt(){
+  return { tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' } }, legend:{ top:0, textStyle:{ color:'#475569' } },
+    grid:{ left:62, right:58, top:34, bottom:44 },
+    xAxis:{ type:'category', axisLabel:{ fontSize:10, color:'#64748b' }, axisLine:{ lineStyle:{ color:'#cbd5e1' } } },
+    yAxis:[ { type:'value', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#64748b', formatter:function(v){ return (v/10000).toFixed(1)+'万'; } }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } } ] };
+}
+
+/* ================= 日报渲染 ================= */
+var dayIdx = DATA.days.length - 1;
+
+function renderDaily(){
+  var day = DATA.days[dayIdx];
+  var k = day.kpi;
+  var prev = dayIdx > 0 ? DATA.days[dayIdx-1].kpi : null;
+  document.getElementById('dDateLabel').textContent = day.date;
+
+  var html = '';
+  /* 日报 = 运营执行视角：流量漏斗 → 成交 → 利润（链路：毛利→边际贡献→净利润） */
+  html += kpiCard('当日净利润', fmtY(k[4]), '元', '较昨日 ' + chgTag(k[4], prev?prev[4]:null) + ' · 净利率 ' + fmtPct(k[11]), '#dc2626', 'kpi-main', 'CORE');
+  html += kpiCard('当日边际贡献', fmtY(k[18]), '元', '毛利 ' + fmtY(k[3]) + ' − 佣金 − 推广费', '#7c3aed', 'kpi-sub-profit', '链路');
+  html += kpiCard('当日净收入', fmtY(k[0]), '元', '较昨日 ' + chgTag(k[0], prev?prev[0]:null), '#1e3a8a', '', '');
+  html += kpiCard('当日订单收入', fmtY(k[1]), '元', '退款 ' + fmtY(k[2]) + ' 元', '#0891b2', '', '');
+  html += kpiCard('访客 / 买家', fmtN(k[5]) + ' / ' + fmtN(k[6]), '', '真实买家 ' + fmtN(k[7]) + ' · 转化率 ' + fmtPct(k[13]), '#8b5cf6', '', '');
+  html += kpiCard('客单价', '¥'+(k[12]==null?'-':k[12].toFixed(1)), '', '净收入 ÷ 买家数', '#ea580c', '', '');
+  html += kpiCard('补单占比', fmtPct(k[15]), '', '补单收入 ' + fmtY(k[14]) + ' ÷ 订单收入 · 推广费 ' + fmtY(k[8]) + ' 元', '#a855f7', '', '');
+  html += kpiCard('退款率', k[1] ? fmtPct(k[2]/k[1]) : '-', '', '退款金额 ' + fmtY(k[2]) + ' ÷ 订单收入', '#64748b', '', '');
+  document.getElementById('dKpi').innerHTML = html;
+
+  /* 近30天趋势 */
+  var start = Math.max(0, dayIdx-29);
+  var seg = DATA.days.slice(start, dayIdx+1);
+  C30.setOption(baseOpt(), true);
+  C30.setOption({
+    legend:{ data:['净收入','净利润'] },
+    xAxis:{ data: seg.map(function(d){return d.date.slice(5);}), axisLabel:{ interval:3 } },
+    yAxis:[ { name:'净收入', axisLabel:{ formatter:function(v){return (v/10000).toFixed(1)+'万';} } },
+            { type:'value', name:'净利润', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#94a3b8', formatter:function(v){ return (v/10000).toFixed(1)+'万'; } }, splitLine:{ show:false } } ],
+    series:[
+      { name:'净收入', type:'bar', barWidth:'55%', data:seg.map(function(d){return d.kpi[0];}), itemStyle:{ color:'#94a3b8', borderRadius:[3,3,0,0] } },
+      { name:'净利润', type:'line', yAxisIndex:1, smooth:true, symbolSize:5, data:seg.map(function(d){return d.kpi[4];}), lineStyle:{ color:'#dc2626', width:2.5 }, itemStyle:{ color:'#dc2626' } }
+    ]
+  });
+
+  /* 平台饼图（净利润） */
+  CPD.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}<br/>净利润：{c} 元（{d}%）' },
+    legend:{ bottom:0, textStyle:{ color:'#475569', fontSize:11 } },
+    color:['#dc2626','#7c3aed','#ea580c','#a855f7','#0891b2','#10b981','#ec4899','#64748b'],
+    series:[{ type:'pie', radius:['38%','62%'], center:['50%','44%'], label:{ formatter:'{b}\n{d}%', fontSize:11, color:'#475569' },
+      data: day.pl.map(function(p){ return { name:p[0], value:Math.max(p[2],0) }; }) }]
+  }, true);
+
+  /* 店铺条形（净利润） */
+  var sh = day.sh.slice().reverse();
+  CSD.setOption({
+    tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' }, formatter:function(ps){
+      var s=sh[ps[0].dataIndex];
+      return s[0] + '<br/>净利润：' + fmtY(s[2]) + ' 元<br/>净收入：' + fmtY(s[1]) + ' 元<br/>访客：' + fmtN(s[3]) + ' · 买家：' + fmtN(s[4]);
+    }},
+    grid:{ left:130, right:34, top:10, bottom:26 },
+    xAxis:{ type:'value', axisLabel:{ fontSize:10, color:'#64748b', formatter:function(v){return (v/10000).toFixed(1)+'万';} }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+    yAxis:{ type:'category', data:sh.map(function(s){return s[0];}), axisLabel:{ fontSize:11, color:'#475569' }, axisLine:{ show:false }, axisTick:{ show:false } },
+    series:[{ type:'bar', barWidth:'55%', data:sh.map(function(s){return s[2];}),
+      itemStyle:{ color:function(p){ return p.value>=0 ? '#dc2626' : '#16a34a'; }, borderRadius:[0,3,3,0] },
+      label:{ show:true, position:'right', fontSize:10, color:'#64748b', formatter:function(p){ return (p.value/10000).toFixed(2)+'万'; } } }]
+  }, true);
+
+  /* 盈亏 */
+  document.getElementById('dWl').innerHTML = wlHtml(day.wl[0], day.wl[1]);
+
+  /* 运营表（净利润列在前） */
+  var stRows = '';
+  day.st.forEach(function(s, i){
+    var rate = s[1] ? s[2]/s[1]*100 : null;
+    stRows += '<tr><td'+medal(i+1)+'>'+(i+1)+'</td><td class="name">'+s[0]+'</td>'
+      + '<td class="num col-profit">'+fmtY(s[2])+'</td><td class="num b">'+fmtY(s[1])+'</td>'
+      + '<td class="num">'+(rate==null?'-':rate.toFixed(1)+'%')+'</td><td class="num muted">'+s[3]+'</td></tr>';
+  });
+  document.getElementById('dStaffBody').innerHTML = stRows;
+
+  /* Top 商品 */
+  var tpRows = '';
+  day.tp.forEach(function(p, i){
+    tpRows += '<tr><td'+medal(i+1)+'>'+(i+1)+'</td><td class="id">'+p[0]+'</td><td class="leader">'+p[1]+'</td>'
+      + '<td class="num col-profit">'+fmtY(p[3])+'</td><td class="num b">'+fmtY(p[2])+'</td></tr>';
+  });
+  document.getElementById('dTopBody').innerHTML = tpRows;
+
+  /* 店铺明细表（净利润 + 推广费 + 补单占比） */
+  var shRows = '';
+  day.sh.forEach(function(s, i){
+    shRows += '<tr><td class="rank">'+(i+1)+'</td><td class="name">'+s[0]+'</td>'
+      + '<td class="num col-profit">'+fmtY(s[2])+'</td><td class="num b">'+fmtY(s[1])+'</td>'
+      + '<td class="num">'+(s[5]>0?'<span style="color:#ea580c">'+fmtY(s[5])+'</span>':'-')+'</td>'
+      + '<td class="num">'+(s[6]!=null?'<span style="color:#a855f7">'+fmtPct(s[6])+'</span>':'-')+'</td>'
+      + '<td class="num">'+fmtN(s[3])+'</td><td class="num">'+fmtN(s[4])+'</td></tr>';
+  });
+  document.getElementById('dShopBody').innerHTML = shRows;
+}
+
+/* ================= 月报渲染 ================= */
+var monIdx = DATA.months.length - 1;
+if(DATA.months[monIdx] && !DATA.months[monIdx].complete) monIdx--;
+
+function monLabel(m){ return m.month.slice(0,4)+'年'+parseInt(m.month.slice(5,7))+'月'; }
+
+function renderMonthly(){
+  var m = DATA.months[monIdx];
+  var prev = monIdx>0 ? DATA.months[monIdx-1] : null;
+  var yoy = null;
+  for(var i=0;i<DATA.months.length;i++){
+    if(DATA.months[i].month === (parseInt(m.month.slice(0,4))-1)+'-'+m.month.slice(5)){ yoy = DATA.months[i]; break; }
+  }
+  var k = m.kpi;
+  var pk = prev ? prev.kpi : null;
+  var yk = yoy ? yoy.kpi : null;
+  var label = monLabel(m);
+  document.getElementById('mMonthLabel').textContent = label;
+  document.getElementById('mCostTitle').textContent = label;
+  document.getElementById('mDailyTitle').textContent = label;
+  document.getElementById('mPlatTitle').textContent = label;
+  document.getElementById('mWlTitle').textContent = label;
+  document.getElementById('mShopTitle').textContent = label;
+  document.getElementById('mSupTitle').textContent = label;
+  document.getElementById('mTopTitle').textContent = label;
+  document.getElementById('mAttrTitle').textContent = label;
+  document.getElementById('mPromoTitle').textContent = label;
+  document.getElementById('mSupplyTitle').textContent = label;
+
+  /* KPI 卡片（净利润为中心，8 卡） */
+  var html = '';
+  html += kpiCard('当月净利润', fmtW(k[4]), '万', '环比 '+chgTag(k[4], pk?pk[4]:null)+' · 同比 '+chgTag(k[4], yk?yk[4]:null), '#dc2626', 'kpi-main', 'CORE');
+  html += kpiCard('当月边际贡献', fmtW(k[25]), '万', '毛利 '+fmtW(k[3])+' − 佣金 − 推广费', '#7c3aed', 'kpi-sub-profit', '链路');
+  html += kpiCard('推广费', fmtW(k[8]), '万', '推广收入 '+fmtW(k[9])+' 万', '#ea580c', '', '');
+  html += kpiCard('推广 ROI', fmtRoi(k[24]), '', '推广收入 / 推广费', (k[24]!=null && k[24]>=1) ? '#dc2626' : '#16a34a', '', '');
+  html += kpiCard('补单占比', fmtPct(k[22]), '', '补单收入 '+fmtW(k[21])+' ÷ 订单收入', '#a855f7', '', '');
+  html += kpiCard('当月净收入', fmtW(k[0]), '万', '净利率 '+fmtPct(k[17])+' · 环比 '+chgTag(k[0], pk?pk[0]:null), '#1e3a8a', '', '');
+  html += kpiCard('访客 / 买家', fmtN(k[5])+' / '+fmtN(k[6]), '', '转化率 '+fmtPct(k[20]), '#8b5cf6', '', '');
+  html += kpiCard('客单价', '¥'+(k[19]==null?'-':k[19].toFixed(1)), '', '推广费率 '+fmtPct(k[23]), '#475569', '', '');
+  document.getElementById('mKpi').innerHTML = html;
+
+  /* 利润结构（链路：净收入→毛利→边际贡献→净利润；补单成本不参与利润链路） */
+  var net = k[0];
+  var parts = [
+    ['商品成本', k[10], '#f59e0b'], ['快递费', k[11], '#94a3b8'], ['平台佣金', k[12], '#8b5cf6'],
+    ['推广费', k[8], '#ea580c'], ['分摊费用', k[15], '#64748b']
+  ];
+  var bar = '', leg = '', body = '';
+  parts.forEach(function(p){
+    var ratio = net ? p[1]/net*100 : 0;
+    bar += '<div class="seg" style="width:'+ratio.toFixed(1)+'%;background:'+p[2]+'" title="'+p[0]+' '+(p[1]/10000).toFixed(2)+'万 ('+ratio.toFixed(1)+'%)"><span>'+p[0]+' '+ratio.toFixed(1)+'%</span></div>';
+    leg += '<span class="lg"><i style="background:'+p[2]+'"></i>'+p[0]+' '+(p[1]/10000).toFixed(2)+'万</span>';
+    body += '<tr><td class="name">'+p[0]+'</td><td class="num b">'+(p[1]/10000).toFixed(2)+'</td><td class="num">'+ratio.toFixed(1)+'%</td></tr>';
+  });
+  var pr = net ? k[4]/net*100 : 0;
+  bar += '<div class="seg" style="width:'+Math.max(pr,0).toFixed(1)+'%;background:'+(pr>=0?'#dc2626':'#16a34a')+'" title="净利润 '+(k[4]/10000).toFixed(2)+'万 ('+pr.toFixed(1)+'%)"><span>净利润 '+pr.toFixed(1)+'%</span></div>';
+  leg += '<span class="lg"><i style="background:#dc2626"></i>净利润 '+(k[4]/10000).toFixed(2)+'万</span>';
+  body += '<tr><td class="name">净利润</td><td class="num b '+(pr>=0?'up':'down')+'">'+(k[4]/10000).toFixed(2)+'</td><td class="num">'+pr.toFixed(1)+'%</td></tr>';
+  /* 链路行：毛利 → 边际贡献 → 净利润 */
+  var gr = net ? k[3]/net*100 : 0, mr = net ? k[25]/net*100 : 0;
+  body += '<tr class="chain-row" style="border-top:2px solid #e2e8f0"><td class="name b">毛利（发货收入−成本−快递）</td><td class="num b">'+(k[3]/10000).toFixed(2)+'</td><td class="num">'+gr.toFixed(1)+'%</td></tr>';
+  body += '<tr class="chain-row"><td class="name b">边际贡献（毛利−佣金−推广）</td><td class="num b" style="color:#7c3aed">'+(k[25]/10000).toFixed(2)+'</td><td class="num">'+mr.toFixed(1)+'%</td></tr>';
+  document.getElementById('mCostBar').innerHTML = bar;
+  document.getElementById('mCostLegend').innerHTML = leg;
+  document.getElementById('mCostBody').innerHTML = body;
+
+  /* 当月每日 */
+  CDM.setOption(baseOpt(), true);
+  CDM.setOption({
+    legend:{ data:['净收入','净利润'] },
+    xAxis:{ data:m.daily.map(function(d){return d[0];}), axisLabel:{ interval:3 } },
+    yAxis:[ { name:'净收入' }, { type:'value', name:'净利润', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#94a3b8', formatter:function(v){ return (v/10000).toFixed(1)+'万'; } }, splitLine:{ show:false } } ],
+    series:[
+      { name:'净收入', type:'bar', barWidth:'55%', data:m.daily.map(function(d){return d[1];}), itemStyle:{ color:'#94a3b8', borderRadius:[3,3,0,0] } },
+      { name:'净利润', type:'line', yAxisIndex:1, smooth:true, symbolSize:4, data:m.daily.map(function(d){return d[2];}), lineStyle:{ color:'#dc2626', width:2.5 }, itemStyle:{ color:'#dc2626' } }
+    ]
+  });
+
+  /* 归因瀑布 */
+  renderAttr(m, prev);
+
+  /* ===== 推广费 & 补单 专项图表 ===== */
+  renderPromoPanel(m, prev);
+  renderSupplyPanel(m, prev);
+  renderKeyInsight(m, prev);
+
+  /* 平台饼图（净利润） */
+  CPM.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}<br/>净利润：{c} 万元（{d}%）' },
+    legend:{ bottom:0, textStyle:{ color:'#475569', fontSize:11 } },
+    color:['#dc2626','#7c3aed','#ea580c','#a855f7','#0891b2','#10b981','#ec4899','#64748b'],
+    series:[{ type:'pie', radius:['38%','62%'], center:['50%','44%'], label:{ formatter:'{b}\n{d}%', fontSize:11, color:'#475569' },
+      data:m.pl.map(function(p){ return { name:p[0], value:Math.max(p[2],0) }; }) }]
+  }, true);
+
+  /* 盈亏 */
+  document.getElementById('mWl').innerHTML = wlHtml(m.wl[0], m.wl[1]);
+
+  /* 店铺表（净利润列在前） */
+  var shRows = '';
+  m.sh.forEach(function(s, i){
+    shRows += '<tr><td class="rank">'+(i+1)+'</td><td class="name">'+s[0]+'</td>'
+      + '<td class="num col-profit">'+s[2]+'</td><td class="num b">'+s[1]+'</td>'
+      + '<td class="num '+clsNum(s[3])+'">'+(s[3]==null?'-':s[3].toFixed(1)+'%')+'</td>'
+      + '<td class="num">'+(s[7]>0?'<span style="color:#ea580c">'+s[7]+'</span>':'-')+'</td>'
+      + '<td class="num">'+(s[8]!=null?'<span style="color:#a855f7">'+s[8]+'%</span>':'-')+'</td>'
+      + '<td class="num">'+fmtN(s[4])+'</td><td class="num">'+fmtN(s[5])+'</td></tr>';
+  });
+  document.getElementById('mShopBody').innerHTML = shRows;
+
+  /* 主管排名（月报 = 经营管理视角） */
+  var supRows = '';
+  m.sup.forEach(function(s, i){
+    var rate = s[1] ? s[2]/s[1]*100 : null;
+    supRows += '<tr><td'+medal(i+1)+'>'+(i+1)+'</td><td class="name">'+s[0]+'</td>'
+      + '<td class="num col-profit">'+s[2]+'</td><td class="num b">'+s[1]+'</td>'
+      + '<td class="num">'+(rate==null?'-':rate.toFixed(1)+'%')+'</td>'
+      + '<td class="num">'+s[4]+'</td><td class="num muted">'+s[3]+'</td></tr>';
+  });
+  document.getElementById('mSupBody').innerHTML = supRows;
+
+  /* 主管条形图（按净利润） */
+  var supD = m.sup.slice().reverse();
+  CSUP.setOption({
+    tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' }, formatter:function(ps){
+      var s = supD[ps[0].dataIndex];
+      return s[0] + '<br/>净利润：' + s[2] + ' 万元<br/>净收入：' + s[1] + ' 万元<br/>管辖店铺：' + s[4] + ' 家';
+    }},
+    grid:{ left:80, right:40, top:8, bottom:22 },
+    xAxis:{ type:'value', axisLabel:{ fontSize:10, color:'#94a3b8', formatter:function(v){ return v.toFixed(1)+'万'; } }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+    yAxis:{ type:'category', data:supD.map(function(s){return s[0];}), axisLabel:{ fontSize:12, color:'#475569', fontWeight:600 }, axisLine:{ show:false }, axisTick:{ show:false } },
+    series:[{ type:'bar', barWidth:'45%', data:supD.map(function(s){return s[2];}),
+      itemStyle:{ color:function(p){ return p.value>=0 ? '#dc2626' : '#16a34a'; }, borderRadius:[0,3,3,0] },
+      label:{ show:true, position:'right', fontSize:10, color:'#64748b', formatter:function(p){ return p.value.toFixed(1)+'万'; } } }]
+  }, true);
+
+  /* Top 商品 */
+  var tpRows = '';
+  m.tp.forEach(function(p, i){
+    tpRows += '<tr><td'+medal(i+1)+'>'+(i+1)+'</td><td class="id">'+p[0]+'</td><td class="leader">'+p[1]+'</td>'
+      + '<td class="num col-profit">'+p[3]+'</td><td class="num b">'+p[2]+'</td></tr>';
+  });
+  document.getElementById('mTopBody').innerHTML = tpRows;
+
+  /* 提示区（按月动态生成） */
+  var nb = '<b>月报 = 经营管理视角</b>：聚焦「本月赚了多少、利润从哪来、钱花哪了」，重点看利润结构 / 归因 / 推广补单效率 / 主管团队考核。';
+  nb += '默认展示最近一个完整月（当前所选：'+label+'）';
+  if(prev) nb += '，环比基准为 '+monLabel(prev)+'，同比基准为 '+(yoy?monLabel(yoy):'-');
+  nb += '。<b style="color:#dc2626">所有对比已按 净利润 排序</b>，净利润列已标红强调。';
+  if(m.month === '2024-04'){
+    nb += '<br><b>4月利润下滑说明（口径：净利润=发货收入−商品成本−快递费−佣金−推广费−分摊费用）：</b>4月净利润 '+fmtW(k[4])+' 万（环比 3月 '+fmtW(pk?pk[4]:null)+' 万 <span class="down">变动 '+fmtW(k[4]-(pk?pk[4]:0))+' 万</span>）。';
+    nb += '主因是 <b>发货收入（真实收入）从 3月 119.5万 下滑至 75.3万（-44.3万）</b>；';
+    nb += '成本端全面下降形成对冲：推广费停投 -6.0万、快递费 -5.8万、商品成本 -5.5万、佣金 -2.6万，合计增利约 19.9万；';
+    nb += '分摊费用 +2.0万 反向拖累。补单占比 28.1% → 19.7%（补单不参与利润链路，仅反映订单结构变化）。';
+  } else if(m.month === '2024-03'){
+    nb += '<br><b>3月提示：</b>本月补单占比 '+(k[22]==null?'-':(k[22]*100).toFixed(1))+'%（补单收入 '+fmtW(k[21])+' 万 ÷ 订单收入 '+fmtW(k[1])+' 万），补单已从净收入中剔除、不参与利润链路。';
+  }
+  document.getElementById('mNotice').innerHTML = nb;
+}
+
+/* ===== 归因瀑布（净利润） ===== */
+function renderAttr(m, prev){
+  var box = document.getElementById('mAttrText');
+  if(!prev){
+    box.innerHTML = '该月为数据起始月，无上月可比。';
+    CAT.clear();
+    return;
+  }
+  var k = m.kpi, pk = prev.kpi;
+  /* 正确口径：净利润 = 发货收入 - 商品成本 - 快递费 - 平台佣金 - 推广费 - 总分摊费用
+     发货收入 = 毛利 + 商品成本 + 快递费（由毛利倒推） */
+  var shipCur = k[3] + k[10] + k[11];      /* 本期发货收入 */
+  var shipPrev = pk[3] + pk[10] + pk[11];  /* 上期发货收入 */
+  var factors = [
+    ['发货收入变动', shipCur - shipPrev, true],   /* 真实收入变动（与净收入存在时间差） */
+    ['商品成本', -(k[10]-pk[10]), true],
+    ['快递费', -(k[11]-pk[11]), true],
+    ['平台佣金', -(k[12]-pk[12]), true],
+    ['推广费', -(k[8]-pk[8]), true],   /* 推广费：少投→增利 */
+    ['分摊费用', -(k[15]-pk[15]), true]
+  ];
+  var sumF = factors.reduce(function(a,f){ return a+f[1]; }, 0);
+  var dProfit = k[4]-pk[4];
+  var diff = dProfit - sumF;
+  factors.push(['其他/口径差异', diff, false]);
+
+  var cats = ['上月净利润'].concat(factors.map(function(f){return f[0];})).concat(['本月净利润']);
+  var base = [0]; var acc = pk[4];
+  factors.forEach(function(f){ base.push(acc); acc += f[1]; });
+  base.push(0);
+  var vals = [pk[4]].concat(factors.map(function(f){return f[1];})).concat([k[4]]);
+  var colors = [pk[4]>=0?'#dc2626':'#16a34a'];
+  factors.forEach(function(f){
+    if(f[0]==='推广费') colors.push('#ea580c');
+    else if(f[0]==='发货收入变动') colors.push(f[1]>=0?'#dc2626':'#16a34a');
+    else colors.push(f[1]>=0?'#dc2626':'#16a34a');
+  });
+  colors.push(k[4]>=0?'#dc2626':'#16a34a');
+
+  CAT.setOption({
+    tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' }, formatter:function(ps){
+      var i = ps[0].dataIndex; return cats[i]+'<br/>'+(i===0?'净利润（元）：':'影响（元）：')+fmtY(vals[i]);
+    }},
+    grid:{ left:70, right:20, top:24, bottom:70 },
+    xAxis:{ type:'category', data:cats, axisLabel:{ fontSize:10, color:'#64748b', interval:0, rotate:28, formatter:function(v){
+      if(v==='推广费') return '{bold|'+v+'}';
+      return v;
+    }, rich:{ bold:{ fontWeight:700, color:'#ea580c' } } } },
+    yAxis:{ type:'value', name:'万元', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#94a3b8', formatter:function(v){ return (v/10000).toFixed(0); } }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+    series:[
+      { type:'bar', stack:'w', silent:true, data:base, itemStyle:{ color:'transparent' }, tooltip:{ show:false } },
+      { type:'bar', stack:'w', data:vals, barWidth:'52%',
+        itemStyle:{ color:function(p){ return colors[p.dataIndex]; }, borderRadius:[2,2,0,0] },
+        label:{ show:true, position:'top', fontSize:10, color:'#475569', formatter:function(p){ return (p.value/10000).toFixed(1); } } }
+    ]
+  }, true);
+
+  /* 归因文字 */
+  var lines = [];
+  lines.push('<b>'+monLabel(m)+' 净利润 '+fmtW(k[4])+' 万</b>，较 '+monLabel(prev)+'（'+fmtW(pk[4])+' 万）变动 <b>'+fmtW(dProfit)+' 万</b>（口径：净利润=发货收入−商品成本−快递费−佣金−推广费−分摊费用）：');
+  factors.forEach(function(f){
+    var sign = f[1]>=0 ? '增利' : '减利';
+    var c = f[1]>=0 ? 'up' : 'down';
+    var em = f[0]==='推广费';
+    var prefix = em ? '<b style="color:#ea580c">★</b> ' : '· ';
+    lines.push('<span class="'+c+'">'+prefix+f[0]+'：'+(f[1]/10000>=0?'+':'')+(f[1]/10000).toFixed(2)+' 万（'+sign+'）</span>');
+  });
+  box.innerHTML = lines.join('<br>');
+}
+
+/* ===== 推广费分析 ===== */
+function renderPromoPanel(m, prev){
+  var k = m.kpi;
+  var prev_pf = prev ? prev.kpi[8] : null;
+  var prev_pv = prev ? prev.kpi[9] : null;
+
+  /* 折线图：推广费（左轴）+ 推广收入（右轴） */
+  CPROMO.setOption({
+    tooltip:{ trigger:'axis' },
+    legend:{ data:['推广费','推广收入'], top:0, textStyle:{ color:'#475569' } },
+    grid:{ left:60, right:60, top:34, bottom:30 },
+    xAxis:{ type:'category', data:m.daily.map(function(d){return d[0];}), axisLabel:{ fontSize:10, color:'#94a3b8', interval:3 } },
+    yAxis:[
+      { type:'value', name:'推广费', axisLabel:{ fontSize:10, color:'#ea580c', formatter:function(v){return (v/10000).toFixed(1)+'万';} }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+      { type:'value', name:'推广收入', axisLabel:{ fontSize:10, color:'#10b981', formatter:function(v){return (v/10000).toFixed(1)+'万';} }, splitLine:{ show:false } }
+    ],
+    series:[
+      { name:'推广费', type:'bar', barWidth:'40%', data:m.daily.map(function(d){return d[3];}), itemStyle:{ color:'#ea580c', borderRadius:[2,2,0,0] } },
+      { name:'推广收入', type:'line', yAxisIndex:1, smooth:true, symbolSize:3, data:m.daily.map(function(d){return d[4];}), lineStyle:{ color:'#10b981', width:2 }, itemStyle:{ color:'#10b981' } }
+    ]
+  }, true);
+
+  /* 推广费洞察文字 */
+  var pi = [];
+  pi.push('本月推广费 <b>'+fmtW(k[8])+' 万</b>，撬动推广收入 <b>'+fmtW(k[9])+' 万</b>');
+  if(k[8] === 0){
+    pi[0] = '本月推广费 <b style="color:#ea580c">完全停投（0 元）</b>';
+    pi.push('推广收入仍有 <b>'+fmtW(k[9])+' 万</b>——属于<b>前期投入的递延效应</b>');
+    pi.push('推广费率 = <b>0%</b>，ROI = <b>∞</b>');
+  } else {
+    pi.push('推广费率 ' + fmtPct(k[23]) + ' · ROI = <b>'+fmtRoi(k[24])+'</b>');
+  }
+  if(prev){
+    var dPF = k[8]-prev.kpi[8];
+    var dPV = k[9]-prev.kpi[9];
+    pi.push('环比推广费 <span class="'+(dPF<0?'up':'down')+'">'+(dPF>=0?'+':'')+fmtW(dPF)+' 万</span>，推广收入 <span class="'+(dPV<0?'down':'up')+'">'+(dPV>=0?'+':'')+fmtW(dPV)+' 万</span>');
+  }
+  document.getElementById('mPromoInsight').innerHTML = pi.join(' · ');
+}
+
+/* ===== 补单占比分析（补单不参与利润链路，重点看占比） ===== */
+function renderSupplyPanel(m, prev){
+  var k = m.kpi;
+  /* 每日补单占比 = 补单收入 / 订单收入 */
+  var dailyRatio = m.daily.map(function(d){
+    var order = d[6]; var sup = d[5];
+    return order ? (sup/order) : null;
+  });
+  CSUPPLY.setOption({
+    tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' }, formatter:function(ps){
+      var i = ps[0].dataIndex;
+      var d = m.daily[i];
+      return d[0] + '<br/>补单占比：' + (dailyRatio[i]==null?'-':(dailyRatio[i]*100).toFixed(1)+'%')
+        + '<br/>补单收入：' + fmtY(d[5]) + ' 元<br/>订单收入：' + fmtY(d[6]) + ' 元';
+    }},
+    legend:{ data:['补单占比'], top:0, textStyle:{ color:'#475569' } },
+    grid:{ left:60, right:30, top:34, bottom:30 },
+    xAxis:{ type:'category', data:m.daily.map(function(d){return d[0];}), axisLabel:{ fontSize:10, color:'#94a3b8', interval:3 } },
+    yAxis:{ type:'value', name:'占比', axisLabel:{ fontSize:10, color:'#94a3b8', formatter:function(v){ return v*100+'%'; } }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+    series:[
+      { name:'补单占比', type:'bar', barWidth:'45%', data:dailyRatio,
+        itemStyle:{ color:'#a855f7', borderRadius:[2,2,0,0] },
+        label:{ show:true, position:'top', fontSize:9, color:'#94a3b8', formatter:function(p){ return p.value==null?'':(p.value*100).toFixed(0)+'%'; } } }
+    ]
+  }, true);
+
+  /* 月级洞察：补单占比是核心指标，补单不参与利润链路 */
+  var si = [];
+  var ratio = k[22];   /* 补单占比 */
+  si.push('本月补单占比 <b style="color:#a855f7">'+(ratio==null?'-':(ratio*100).toFixed(1)+'%')+'</b>（补单收入 '+fmtW(k[21])+' 万 ÷ 订单收入 '+fmtW(k[1])+' 万）');
+  si.push('补单收入已在净收入中剔除，<b>不参与利润链路</b>（净利润=发货收入−商品成本−快递费−佣金−推广费−分摊费用）');
+  if(prev){
+    var pr = prev.kpi[22];
+    var dR = ratio!=null && pr!=null ? (ratio-pr)*100 : null;
+    si.push('环比补单占比 <span class="'+(dR!=null?(dR>0?'up':'down'):'flat')+'">'+(dR==null?'-':(dR>=0?'+':'')+dR.toFixed(1)+'pp')+'</span>');
+  }
+  document.getElementById('mSupplyInsight').innerHTML = si.join(' · ');
+}
+
+/* ===== 关键洞察汇总 ===== */
+function renderKeyInsight(m, prev){
+  var k = m.kpi;
+  var lines = [];
+  lines.push('<b style="color:#dc2626">▌ 净利润核心结论：</b>'+monLabel(m)+'净利润 <b>'+fmtW(k[4])+' 万</b>，净利率 '+fmtPct(k[17])+'，'+(k[4]>=0?'盈利':'亏损')+'。');
+
+  /* 推广费洞察 */
+  if(k[8] === 0){
+    lines.push('<b style="color:#ea580c">▌ 推广费：</b>本期推广费 <b style="color:#ea580c">完全停投</b>（节省 '+fmtW(k[8])+' 万），但仍有 '+fmtW(k[9])+' 万推广收入（前期投入递延）；<b>ROI 趋于无穷大</b>——注意：递延收入不可持续，下期若无新增投放将快速归零。');
+  } else {
+    lines.push('<b style="color:#ea580c">▌ 推广费：</b>本期推广费 '+fmtW(k[8])+' 万，撬动推广收入 '+fmtW(k[9])+' 万，<b>ROI = '+fmtRoi(k[24])+'</b>'+(k[24]>=1?'（正向）':'（负向，亏损投放）')+'。推广费率 '+fmtPct(k[23])+'。');
+  }
+
+  /* 补单洞察（补单不参与利润链路，重点看占比） */
+  var ratio = k[22];
+  lines.push('<b style="color:#a855f7">▌ 补单占比：</b>本期补单占比 <b style="color:#a855f7">'+(ratio==null?'-':(ratio*100).toFixed(1)+'%')+'</b>（补单收入 '+fmtW(k[21])+' 万 ÷ 订单收入 '+fmtW(k[1])+' 万）。补单收入已从净收入剔除、<b>不参与利润链路</b>，补单占比仅反映订单结构与销售真实性。');
+
+  /* 边际贡献洞察 */
+  var marginRate = k[0] ? (k[25]/k[0]*100) : null;
+  lines.push('<b style="color:#7c3aed">▌ 边际贡献：</b>本期边际贡献 <b>'+fmtW(k[25])+' 万</b>'+(marginRate==null?'':'（占净收入 '+marginRate.toFixed(1)+'%')+') = 毛利 '+fmtW(k[3])+' 万 − 平台佣金 '+fmtW(k[12])+' 万 − 推广费 '+fmtW(k[8])+' 万；净利润 = 边际贡献 − 分摊费用 '+fmtW(k[15])+' 万。');
+
+  /* 环比洞察 */
+  if(prev){
+    var dP = k[4] - prev.kpi[4];
+    var dN = k[0] - prev.kpi[0];
+    var dPF = k[8] - prev.kpi[8];
+    var dRatio = k[22]!=null && prev.kpi[22]!=null ? (k[22]-prev.kpi[22])*100 : null;
+    lines.push('<b style="color:#dc2626">▌ 环比变动：</b>净利润 <span class="'+(dP>=0?'up':'down')+'">'+(dP>=0?'+':'')+fmtW(dP)+' 万</span>、净收入 <span class="'+(dN>=0?'up':'down')+'">'+(dN>=0?'+':'')+fmtW(dN)+' 万</span>、推广费 <span class="'+(dPF<=0?'up':'down')+'">'+(dPF>=0?'+':'')+fmtW(dPF)+' 万</span>、补单占比 <span class="'+(dRatio!=null?(dRatio>0?'up':'down'):'flat')+'">'+(dRatio==null?'-':(dRatio>=0?'+':'')+dRatio.toFixed(1)+'pp')+'</span>。');
+  }
+
+  /* 主管排名洞察 */
+  if(m.sup && m.sup.length){
+    var best = m.sup[0];
+    var rateB = best[1] ? best[2]/best[1]*100 : null;
+    var supParts = m.sup.map(function(s, i){
+      var rr = s[1] ? s[2]/s[1]*100 : null;
+      return (i+1)+'. '+s[0]+' <b class="'+(s[2]>=0?'up':'down')+'">'+s[2]+' 万</b>'+(rr==null?'':('（净利率 '+rr.toFixed(1)+'%')+(s[2]<0?'，亏损':'')+'）');
+    }).join('　');
+    lines.push('<b style="color:#dc2626">▌ 主管考核：</b>净利润最高为 <b>'+best[0]+'（'+best[2]+' 万'+(rateB==null?'':'，净利率 '+rateB.toFixed(1)+'%')+'）</b>；主管排名：'+supParts);
+  }
+
+  document.getElementById('mKeyInsight').innerHTML = lines.join('<br>');
+}
+
+/* ================= 月度总趋势（一次性） ================= */
+(function(){
+  CTM.setOption({
+    tooltip:{ trigger:'axis', axisPointer:{ type:'shadow' }, formatter:function(ps){
+      var d = DATA.months[ps[0].dataIndex];
+      var tag = d.complete ? '' : '（数据未完整）';
+      return d.month + tag + '<br/>净收入：'+d.kpi[0]/10000+' 万元<br/>净利润：'+d.kpi[4]/10000+' 万元<br/>净利率：'+(d.kpi[17]==null?'-':(d.kpi[17]*100).toFixed(1)+'%')+'<br/>访客：'+fmtN(d.kpi[5]);
+    }},
+    legend:{ data:['净收入','净利润'], top:0, textStyle:{ color:'#475569' } },
+    grid:{ left:62, right:58, top:34, bottom:64 },
+    xAxis:{ type:'category', data:DATA.months.map(function(d){return d.month;}), axisLabel:{ fontSize:10, color:'#94a3b8', rotate:40 } },
+    yAxis:[ { type:'value', name:'净收入(万)', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#94a3b8' }, splitLine:{ lineStyle:{ color:'#f1f5f9' } } },
+            { type:'value', name:'净利润(万)', nameTextStyle:{ color:'#94a3b8' }, axisLabel:{ fontSize:10, color:'#94a3b8' }, splitLine:{ show:false } } ],
+    series:[
+      { name:'净收入', type:'bar', barWidth:'48%', data:DATA.months.map(function(d){return d.kpi[0]/10000;}), itemStyle:{ color:'#94a3b8', borderRadius:[3,3,0,0] } },
+      { name:'净利润', type:'line', yAxisIndex:1, smooth:true, symbolSize:5, data:DATA.months.map(function(d){return d.kpi[4]/10000;}), lineStyle:{ color:'#dc2626', width:2.5 }, itemStyle:{ color:'#dc2626' } }
+    ]
+  });
+})();
+
+/* ================= 选择器 ================= */
+var selDate = document.getElementById('selDate');
+DATA.days.forEach(function(d, i){
+  var o = document.createElement('option');
+  o.value = i; o.textContent = d.date;
+  selDate.appendChild(o);
+});
+selDate.value = DATA.days.length - 1;
+selDate.addEventListener('change', function(){ dayIdx = parseInt(this.value); renderDaily(); });
+
+var selMonth = document.getElementById('selMonth');
+DATA.months.forEach(function(m, i){
+  var o = document.createElement('option');
+  o.value = i; o.textContent = m.month + (m.complete ? '' : '（未完整）');
+  selMonth.appendChild(o);
+});
+selMonth.value = monIdx;
+selMonth.addEventListener('change', function(){ monIdx = parseInt(this.value); renderMonthly(); });
+
+document.getElementById('dayCount').textContent = DATA.days.length;
+document.getElementById('monCount').textContent = DATA.months.length;
+
+/* Tab 切换 */
+document.querySelectorAll('.tab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('sec-' + btn.dataset.tab).classList.add('active');
+    setTimeout(function(){ Object.values(charts).forEach(function(c){ c.resize(); }); }, 30);
+  });
+});
+
+/* ================= 初始化 ================= */
+renderDaily();
+renderMonthly();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# 原始数据与临时文件不入库
+*.xlsx
+*.xls
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 临时文件
+*.tmp
+*.log
