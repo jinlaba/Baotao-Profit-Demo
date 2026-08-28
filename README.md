@@ -4,6 +4,8 @@
 
 基于 Excel 原始报表加工的静态分析看板，支持日报 + 月报双视图切换，内嵌全量数据（2022-06 ~ 2024-05）。
 
+编制：胡天祥
+
 ## 预览
 
 访问 [https://jinlaba.github.io/Baotao-Profit-Demo/](https://jinlaba.github.io/Baotao-Profit-Demo/) 查看。
