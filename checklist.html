@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电商经营口径自查表 · 4 个公式 + 3 张表</title>
+<meta name="description" content="把自己店铺的账，从「营业额」算到「净利润」。4 个公式 + 3 张表 + 保本线算法，附可下载 Excel 模板。">
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --ink:#111827; --ink2:#374151; --muted:#6b7280;
+    --line:#e5e7eb; --blue:#1d4ed8; --blue-bg:#eff4ff; --blue-line:#c7d7fe;
+    --red:#c0392b; --red-bg:#fdf0ee; --amber:#b45309; --amber-bg:#fdf6e7;
+    --green:#15803d; --green-bg:#eefaf1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0 14px 56px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  header{padding:34px 0 22px;}
+  .kicker{
+    display:inline-block; font-size:12px; letter-spacing:.06em; color:var(--blue);
+    background:var(--blue-bg); border:1px solid var(--blue-line); border-radius:999px;
+    padding:3px 11px; margin-bottom:14px;
+  }
+  h1{font-size:27px; line-height:1.35; margin:0 0 10px; letter-spacing:-.01em;}
+  .sub{color:var(--muted); font-size:14px; margin:0;}
+  h2{
+    font-size:19px; margin:34px 0 12px; padding-left:11px;
+    border-left:4px solid var(--blue); line-height:1.35;
+  }
+  h3{font-size:16px; margin:22px 0 8px;}
+  p{margin:10px 0;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 16px 14px; margin:14px 0;}
+  .card h3{margin-top:0;}
+  .tag{font-size:12px; color:var(--muted); font-weight:400; margin-left:6px;}
+  table{width:100%; border-collapse:collapse; font-size:14px; margin:10px 0;}
+  th,td{padding:8px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
+  th{background:#f9fafb; color:var(--ink2); font-weight:600; font-size:13px; white-space:nowrap;}
+  td.n{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .who{white-space:nowrap; color:var(--muted); font-size:13px;}
+  .scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  code{
+    background:#f3f4f6; border:1px solid var(--line); border-radius:5px;
+    padding:1px 5px; font-size:13.5px; font-family:ui-monospace,Menlo,Consolas,monospace;
+  }
+  .chain{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; font-size:14px;}
+  .step{
+    background:var(--blue-bg); border:1px solid var(--blue-line); color:var(--blue);
+    border-radius:8px; padding:7px 11px; font-weight:600; white-space:nowrap;
+  }
+  .step.neg{background:var(--red-bg); border-color:#f0c9c3; color:var(--red);}
+  .arrow{color:#9ca3af;}
+  .kv{display:grid; grid-template-columns:1fr; gap:0;}
+  .kv.row{display:flex; justify-content:space-between; gap:14px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .kv.row:last-child{border-bottom:0;}
+  .kv .k{color:var(--ink2); font-size:14px;}
+  .kv .v{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .hi-red{color:var(--red);}
+  .hi-amber{color:var(--amber);}
+  .hi-green{color:var(--green);}
+  .box{border-radius:10px; padding:12px 14px; font-size:14.5px; margin:12px 0;}
+  .box.warn{background:var(--amber-bg); border:1px solid #f2dfb4; color:#7c4a03;}
+  .box.key{background:var(--blue-bg); border:1px solid var(--blue-line); color:#1e3a8a;}
+  .box.key b{color:#1e3a8a;}
+  .pill{display:inline-block; border-radius:6px; padding:1px 7px; font-size:12.5px; font-weight:600; white-space:nowrap;}
+  .p-red{background:var(--red-bg); color:var(--red);}
+  .p-amber{background:var(--amber-bg); color:var(--amber);}
+  .p-green{background:var(--green-bg); color:var(--green);}
+  .p-blue{background:var(--blue-bg); color:var(--blue);}
+  ol,ul{padding-left:20px; margin:10px 0;}
+  li{margin:7px 0;}
+  .cta{
+    background:var(--card); border:1px solid var(--blue-line); border-radius:14px;
+    padding:22px 18px; margin:30px 0 12px; text-align:center;
+  }
+  .cta h2{border:0; padding:0; margin:0 0 6px; font-size:19px; text-align:center;}
+  .cta p{color:var(--muted); font-size:14px; margin:0 0 16px;}
+  .btn{
+    display:block; background:var(--blue); color:#fff; text-decoration:none; font-weight:700;
+    padding:13px 18px; border-radius:10px; margin:9px 0; font-size:15.5px;
+  }
+  .btn.ghost{background:#fff; color:var(--blue); border:1px solid var(--blue-line);}
+  footer{
+    margin-top:34px; padding-top:18px; border-top:1px solid var(--line);
+    color:var(--muted); font-size:12.5px; line-height:1.7;
+  }
+  @media (max-width:420px){
+    h1{font-size:23px;}
+    body{font-size:15px;}
+    th,td{padding:7px 7px; font-size:13px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">电商经营实录 · 两年真账</div>
+  <h1>电商经营口径自查表</h1>
+  <p class="sub">4 个公式 + 3 张表：把自己店铺的账，从「营业额」算到「净利润」。</p>
+</header>
+
+<div class="box key">
+  <b>先记住一句话</b>：平台后台那个数叫<b>订单收入</b>，不是你的收入。<br>
+  口径每往下一层，就少一批钱——算不到最后一格，你永远不知道自己赚没赚。
+</div>
+
+<h2>一、4 个公式（顺序不能乱）</h2>
+
+<div class="chain">
+  <span class="step">订单收入</span><span class="arrow">→</span>
+  <span class="step">净收入</span><span class="arrow">→</span>
+  <span class="step">毛利</span><span class="arrow">→</span>
+  <span class="step">边际贡献</span><span class="arrow">→</span>
+  <span class="step neg">净利润</span>
+</div>
+
+<div class="card">
+  <div class="scroll">
+  <table>
+    <tr><th style="width:34px">#</th><th>公式</th><th>为什么不能停在上一层</th></tr>
+    <tr>
+      <td>1</td>
+      <td><code>净收入 = 订单收入 − 补单 − 退款 − 其他减免</code></td>
+      <td>订单收入含退货、含补单。这一刀不砍，后面全是虚的。</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code>毛利 = 发货收入 − 商品成本 − 快递费</code></td>
+      <td>到这一层只说明你会卖货，失误都出在下一层。</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code>边际贡献 = 毛利 − 平台佣金 − 推广费</code></td>
+      <td>决定你能否覆盖每月固定成本，是保本线的分子。</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code>净利润 = 边际贡献 − 分摊费用</code></td>
+      <td>唯一能回答「到底赚没赚」的口径。分摊不摊账，账就是假的。</td>
+    </tr>
+  </table>
+  </div>
+  <p style="margin-bottom:0;color:var(--muted);font-size:13.5px">
+    分摊费用 = 人工 + 场地 + 仓储 + 客服 + 管理（按人数、面积或订单量摊到每月）。
+  </p>
+</div>
+
+<h2>二、3 张表</h2>
+
+<div class="card">
+  <h3>表 1 · 口径底表<span class="tag">按月，逐月算账</span></h3>
+  <p style="font-size:14.5px;color:var(--ink2);margin:6px 0 4px">
+    字段：月份 ｜ 订单收入 ｜ 补单 ｜ 退款 ｜ 其他减免 ｜ <b>净收入</b> ｜ 商品成本 ｜ 快递费 ｜ <b>毛利</b> ｜ 平台佣金 ｜ 推广费 ｜ <b>边际贡献</b> ｜ 分摊费用 ｜ <b>净利润</b> ｜ 净利率
+  </p>
+  <div class="box warn" style="margin-bottom:0">
+    <b>判断：净利率 &lt; 0 时，先查「分摊费用」这一列，别急着砍推广。</b>
+  </div>
+</div>
+
+<div class="card">
+  <h3>表 2 · 保本线测算表<span class="tag">这张最值钱</span></h3>
+  <p style="font-size:14.5px;color:var(--ink2);margin:6px 0 8px">
+    算法只有一条：<code>保本净收入 = 月均固定分摊 ÷ 边际贡献率</code>
+  </p>
+  <p style="font-size:14.5px;color:var(--ink2);margin:0 0 8px">
+    字段：边际贡献率 ｜ 月均固定分摊 ｜ <b>保本净收入</b> ｜ 本月净收入 ｜ 差额 ｜ 判定
+  </p>
+  <div class="box warn" style="margin-bottom:0">
+    <b>判断：净收入 &lt; 保本线 → 先砍固定成本，别加投放。</b><br>
+    在保本线下面踩油门，卖得越多亏得越多。
+  </div>
+</div>
+
+<div class="card">
+  <h3>表 3 · 平台 / 店铺穿透表<span class="tag">找出血点</span></h3>
+  <p style="font-size:14.5px;color:var(--ink2);margin:6px 0 8px">
+    字段：平台或店铺 ｜ 净收入 ｜ 净利润 ｜ 净利率 ｜ 补单占比 ｜ 判定（加投 / 维持 / 复算 / 砍）
+  </p>
+  <div class="box warn" style="margin-bottom:0">
+    <b>判断：净利率为负 + 补单占比 &gt; 40% → 这个渠道在流血。</b><br>
+    先复算口径，再决定要不要停投。
+  </div>
+</div>
+
+<h2>三、判断阈值</h2>
+<p style="margin-top:0;color:var(--muted);font-size:14px">参考基线 = 我方 2022-06 ~ 2024-05 实测值（9 平台 / 21 店 / 702 天 / 62,991 行明细）。</p>
+
+<div class="card" style="padding-top:6px">
+  <div class="scroll">
+  <table>
+    <tr><th>指标</th><th>我方实测</th><th>预警线</th></tr>
+    <tr><td>净利率（净利润 ÷ 净收入）</td><td class="n hi-red">-1.7%</td><td>&lt; 0 先查分摊</td></tr>
+    <tr><td>分摊费用 ÷ 净收入</td><td class="n hi-amber">37.4%</td><td>&gt; 35% 固定成本过重</td></tr>
+    <tr><td>补单 ÷ 订单收入</td><td class="n hi-amber">41.8%</td><td>&gt; 40% 订单数已失真</td></tr>
+    <tr><td>低于保本线的月份占比</td><td class="n hi-red">15 / 24 个月</td><td>≥ 30% 必须调结构</td></tr>
+  </table>
+  </div>
+  <p style="margin-bottom:0;font-size:13.5px;color:var(--muted)">
+    两年下来：净收入 2070 万，净利率 -1.7%，净利润 <b class="hi-red">-34.8 万</b>。保本线 83 万/月，24 个月里 13 个月在亏。
+  </p>
+</div>
+
+<h2>四、怎么用（15 分钟跑一遍）</h2>
+<ol>
+  <li><b>导数据</b>：从平台后台导出近 3 个月订单与推广明细，只取 4 个字段——订单收入、退款、推广费、发货收入。</li>
+  <li><b>补成本</b>：商品成本、快递费、平台佣金按订单填或按月摊；分摊费用（人员 / 场地 / 仓储 / 管理）直接向财务要总额。</li>
+  <li><b>找出血点</b>：对照阈值标出三件事——哪一层砍得最狠、哪个月跌破保本线、哪个平台在流血。</li>
+</ol>
+
+<div class="cta">
+  <h2>下载 Excel 模板</h2>
+  <p>带公式，填数就自动算出净收入 / 毛利 / 边际贡献 / 净利润 / 保本线<br>内含 2023 全年 12 个月真实样例，可直接对照</p>
+  <a class="btn" href="ecom-checklist-template.xlsx" download>下载自查表模板（.xlsx）</a>
+  <a class="btn ghost" href="./">打开数据源看板（9 平台 / 21 店 / 702 天）</a>
+</div>
+
+<footer>
+  <b>口径来源</b>：自有食品电商 2022-06 ~ 2024-05 真实经营数据，已脱敏（不含姓名、商品 ID、店铺与品牌名）。<br>
+  模板内样例数值即该店铺实测值，公式与样例自洽，可直接覆盖填入自己的数据。<br>
+  卡在哪一层、或算出来的数和后台对不上——把截图发我，我帮你看是哪一步口径出了问题。
+</footer>
+
+</div>
+</body>
+</html>
