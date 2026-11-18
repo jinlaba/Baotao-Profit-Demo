@@ -225,5 +225,35 @@
 </footer>
 
 </div>
+<!-- ===== 作品集联系位（推广位） ===== -->
+<style>
+#hx-contact{position:fixed;right:18px;bottom:18px;z-index:99999;display:flex;align-items:center;gap:11px;
+  padding:10px 16px 10px 11px;border-radius:44px;background:rgba(15,37,87,.93);color:#fff;text-decoration:none;
+  box-shadow:0 8px 26px rgba(9,20,45,.32);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.18);transition:.22s ease;
+  font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif}
+#hx-contact:hover{transform:translateY(-2px);background:rgba(29,78,216,.96);box-shadow:0 12px 32px rgba(29,78,216,.42)}
+#hx-contact .hxc-ic{width:34px;height:34px;border-radius:50%;flex-shrink:0;font-size:16px;
+  background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center}
+#hx-contact .hxc-tx{display:flex;flex-direction:column;line-height:1.25}
+#hx-contact .hxc-tx b{font-size:13.5px;font-weight:700;letter-spacing:.3px}
+#hx-contact .hxc-tx i{font-style:normal;font-size:15px;font-weight:700;letter-spacing:.7px;color:#7dd3fc}
+#hx-contact .hxc-go{font-size:10.5px;line-height:1.4;color:rgba(255,255,255,.62);white-space:nowrap;
+  border-left:1px solid rgba(255,255,255,.2);padding-left:11px;margin-left:2px}
+@media(max-width:720px){
+  #hx-contact{right:12px;bottom:12px;padding:8px 13px 8px 9px;gap:8px;max-width:calc(100vw - 24px)}
+  #hx-contact .hxc-go{display:none}
+  #hx-contact .hxc-ic{width:29px;height:29px;font-size:14px}
+  #hx-contact .hxc-tx b{font-size:12.5px}
+  #hx-contact .hxc-tx i{font-size:13.5px;letter-spacing:.4px}
+}
+@media print{#hx-contact{display:none}}
+</style>
+<a id="hx-contact" href="tel:15674857125" aria-label="电话联系胡天祥 15674857125" title="点击拨打 15674857125">
+  <span class="hxc-ic">&#9742;</span>
+  <span class="hxc-tx"><b>胡天祥</b><i>15674857125</i></span>
+  <span class="hxc-go">同款看板 · 可约电话</span>
+</a>
+<!-- ===== 联系位结束 ===== -->
 </body>
 </html>
